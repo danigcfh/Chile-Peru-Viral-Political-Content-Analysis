@@ -1,0 +1,137 @@
+---
+title: "README"
+author: "DaniGCFH"
+date: "2026-09-29"
+output: html_document
+---
+
+## Chile–Peru Viral Political Content Analysis
+
+This repository contains the R code used to analyze and visualize viral political content on social media during the 2025 Chilean and 2026 Peruvian election cycles. The pipeline covers:
+
+- Sampling viral posts from raw social media exports
+- Cleaning and standardizing the annotated datasets
+- Decomposing multi-label judgement columns into tidy long format
+- Summarizing judgement attributes by country, actor type, and column
+- Visualizing sentiment, valence, candidate appreciation, and event appreciation
+- Running significance tests (G-tests, t-tests) to compare Chile and Peru
+
+The analysis focuses on four actor types: ciudadano (citizen), politico (politician), influencer, and medio (media), while excluding suspicious/bot accounts
+
+## Repository structure
+
+**RScripts**
+
+*Sample_Chile_Peru.R:* describes the way the overall corpus was sampled as to create two sets that were then manually annotated
+
+*data_cleaning.R* : comprises all the steps to clean, standardize, and decompose de
+
+*Viz.R* : Generates all relevant figures from the analysis
+
+*Significance_tests.R*: Runs statistical descriptions and comparisons to test precise theories
+
+**Data**
+
+- *Chile_2025.csv*: Raw Chilean data (input)
+- *Peru_2026.csv:* Raw Peruvian data (input)
+- *Chile_viral.csv*: Sample of viral Chilean posts (output and input). The data was mannually annotated before being reintegrated into the pipeline for furter annalysis.
+- *Peru_viral.csv*:Sampled viral Peruvian posts (output and input). The data was mannually annotated before being reintegrated into the pipeline for furter annalysis
+- *all_obs.rds* :Combined, cleaned Chile + Peru observations
+- *judg_combined.rds* : Long-format judgement observations
+- *judg_summary_combined.rds* : Aggregated judgement summary counts
+
+## Repository structure
+
+### Step 1 — Sampling (`Sample_Chile_Peru.R`)
+
+Filters raw exports to relevant posts and keeps the **top 120 most viral** posts per country.
+
+- Removes posts with fewer than **10 words**
+
+- Removes posts mentioning other countries' elections (Colombia, Honduras, Spain, etc.) via keyword regex
+
+- Keeps up to **5 posts per account** to reduce single-account dominance
+
+- Ranks remaining posts by `statistics.reaction_count`
+
+**Outputs:** `Chile_viral.csv`, `Peru_viral.csv`
+
+### Step 2 — Cleaning & decomposition (`data_cleaning.R`)
+
+- Reads annotated `.xlsx` files and standardizes factor columns (lowercase, trimmed)
+
+- Computes **per-capita engagement metrics** using population divisors:
+
+  - Chile: `18.4` (million)
+
+  - Peru: `34.2` (million)
+
+  - Metrics: reactions, comments, shares, views
+
+- Adds a `country` label
+
+- Combines both countries into `all_obs`
+
+- A custom function that parses multi-label judgement strings of the form is applied to four columns across both countries, then joined back to the cleaned data and aggregated into per-column summaries of counts by attribute and valence.
+
+- **Outputs:** `all_obs.rds`, `judg_combined.rds`, `judg_summary_combined.rds`
+
+### Step 3 — Visualization (`Viz.R`)
+
+Produces the following figures (each as a `ggplot` object):
+
+| Figure | Description |
+|:---|:---|
+| **Sentiment by actor type** | Stacked bar, faceted by country |
+| **Valence by actor type** | Diverging bar (positive up, negative down), faceted by country |
+| **Candidate appreciation** | Left/right judgement counts by country |
+
+**Design conventions:**
+
+- Positive valence: `#2b83ba` (blue)
+
+- Negative valence: `#d7191c` (red)
+
+- Suspicious/bot accounts excluded
+
+- Variables with fewer than 10 observations are collapsed into an "Other" category
+
+### Step 4 — Significance tests (`Significance_tests.R`)
+
+#### Descriptive statistics
+
+- Means of `Stakes` and `Intensidad` by actor type
+
+- Medians of per-capita views/comments
+
+- Gini coefficients (`ineq()`) for view inequality
+
+#### G-tests (Chile vs. Peru), categorical variables
+
+| Comparison                             | Result                     |
+|:---------------------------------------|:---------------------------|
+| Candidate judgement, overall           | No significant difference  |
+| Candidate judgement, citizens          | No significant difference  |
+| Candidate judgement, politicians       | **Significant difference** |
+| Overall post valence                   | **Significant difference** |
+| Post valence, citizens                 | **Significant difference** |
+| Post valence, politicians              | **Significant difference** |
+| Sentiment distribution, overall        | No difference              |
+| Sentiment distribution, per actor type | No difference              |
+
+#### t-tests (Chile vs. Peru), numeric variables
+
+| Metric                  | Result          |
+|:------------------------|:----------------|
+| Overall intensity       | No difference   |
+| Intensity, politicians  | **Significant** |
+| Intensity, other actors | No difference   |
+| Overall stakes          | No difference   |
+| Stakes, medios          | **Significant** |
+| Stakes, other actors    | No difference   |
+
+## Citation
+
+If you use this code, please cite:
+
+> González, Daniela. (2026). *Viral political content in Chile and Peru: analysis code*. [Repository / DOI].
