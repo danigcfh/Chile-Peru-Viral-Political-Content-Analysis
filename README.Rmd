@@ -32,10 +32,13 @@ The analysis focuses on four actor types: ciudadano (citizen), politico (politic
 
 **Data**
 
+- *Guide_codage.xlsx*: description of the qualitative coding guide used, including column name, values and operationalisation guidelines.
 - *Chile_2025.csv*: Raw Chilean data (input)
 - *Peru_2026.csv:* Raw Peruvian data (input)
-- *Chile_viral.csv*: Sample of viral Chilean posts (output and input). The data was mannually annotated before being reintegrated into the pipeline for furter annalysis.
+- *Chile_viral.csv*: Sample of viral Chilean posts (output and input). 
+- *Chile_viral.xlsx*: Sample after being mannually annotated before being reintegrated into the pipeline for furter annalysis.
 - *Peru_viral.csv*:Sampled viral Peruvian posts (output and input). The data was mannually annotated before being reintegrated into the pipeline for furter annalysis
+- *Peru_viral.xlsx*: Sample after being mannually annotated before being reintegrated into the pipeline for furter annalysis.
 - *all_obs.rds* :Combined, cleaned Chile + Peru observations
 - *judg_combined.rds* : Long-format judgement observations
 - *judg_summary_combined.rds* : Aggregated judgement summary counts
