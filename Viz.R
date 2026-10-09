@@ -75,8 +75,7 @@ ggplot(sent, aes(x = Var2, y = pct, fill = Var1)) +
     )
   ) +
   labs(
-    title = "Distribution des sentiments par type d'acteur",
-    subtitle = "Comparaison par pays",
+    caption = "Figure 3: Distribution des sentiments par type d'acteur",
     x = "Type d'acteur",
     y = "Pourcentage (%)",
     fill = "Sentiment"
@@ -87,7 +86,8 @@ ggplot(sent, aes(x = Var2, y = pct, fill = Var1)) +
     strip.text = element_text(size = 12, face = "bold"),
     legend.position = "bottom",
     legend.text = element_text(size = 8),
-    panel.spacing.y = unit(2, "lines")
+    panel.spacing.y = unit(2, "lines"),
+    plot.caption = element_text(hjust = 0, size = 12, face = "bold", margin = margin(20,0,0,0))
   )
 
 ################
@@ -142,8 +142,7 @@ ggplot(valence_plot, aes(x = actor_type, y = count_plot, fill = valence)) +
     labels = c("positive" = "Positive", "negative" = "Negative")
   ) +
   labs(
-    title = "Valence des jugements par type d'acteur",
-    subtitle = "Comparaison par pays",
+    caption = "Figure 2: Valence des publications par type d'acteur",
     x = "Type d'acteur",
     y = "N",
     fill = "Valence"
@@ -153,7 +152,8 @@ ggplot(valence_plot, aes(x = actor_type, y = count_plot, fill = valence)) +
     axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
     strip.text = element_text(size = 12, face = "bold"),
     legend.position = "bottom",
-    panel.spacing.x = unit(3,"lines")
+    panel.spacing.x = unit(3,"lines"),
+    plot.caption = element_text(hjust = 0, size = 12, face = "bold", margin = margin(20,0,0,0))
   )
 
 ################
@@ -299,7 +299,7 @@ judg_filtered <- judg_stacked %>%
 max_value <- max(abs(judg_filtered$count_plot), na.rm = TRUE)
 
 # Round up to a nice number
-y_limit <- ceiling(max_value / 10) * 10
+y_limit <- ceiling(max_value / 10) * 5
 
 # Variable labels
 variable_labels <- c(
@@ -351,8 +351,7 @@ ggplot(judg_filtered, aes(x = column_display, y = count_plot, fill = valence)) +
     labels = valence_labels
   ) +
   labs(
-    title = "Évaluation des candidats par dimension appréciative",
-    subtitle = "Comparaison Chili / Pérou (Gauche vs Droite)",
+    caption = "Figure 1: Évaluation des candidats par dimension appréciative",
     x = "Orientation",
     y = "Nombre de jugements",
     fill = "Valence"
@@ -363,7 +362,9 @@ ggplot(judg_filtered, aes(x = column_display, y = count_plot, fill = valence)) +
     strip.text = element_text(size = 10, face = "bold"),
     legend.position = "bottom",
     panel.grid.major.x = element_blank(),
-    panel.spacing.y = unit(2, "lines"))
+    panel.spacing.y = unit(2, "lines"),
+    plot.caption = element_text(hjust = 0, size = 12, face = "bold", margin = margin(20,0,0,0))
+  )
 
 ####################
 ### event appreciation by variable and country
