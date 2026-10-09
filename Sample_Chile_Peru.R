@@ -1,5 +1,6 @@
 library(dplyr)
 library(stringr)
+library(tidyverse)
 
 Peru_2026 <- read_csv("Peru_2026.csv")
 Chile_2025 <- read_csv("Chile_2025.csv")

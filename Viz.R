@@ -8,7 +8,7 @@ df <- readRDS("all_obs.rds")
 ch_df <- df %>% 
   filter(country== "Chile")
 pr_df <- df %>% 
-  filter(country== "Chile")
+  filter(country== "Perú")
 
 judg <- readRDS("judg_summary_combined.rds")
 
@@ -40,11 +40,19 @@ sent <- rbind(ch_sent,pr_sent)%>%
 
 
 ggplot(sent, aes(x = Var2, y = pct, fill = Var1)) +
-  geom_bar(stat = "identity", position = "stack") +
+  geom_bar(stat = "identity", position = "stack")+
+  scale_x_discrete(labels = c(
+    "ciudadano" = "Citoyen",
+    "influencer" = "Influenceur",
+    "medio" = "Média",
+    "politico" = "Politicien"))+
   geom_text(aes(label = paste0(round(pct, 0), "%")), 
             position = position_stack(vjust = 0.5), 
             size = 2.5, color = "white") +
-  facet_grid(country ~ ., scales = "free_x") +
+  facet_wrap(~ country, scales = "fixed", ncol = 1) +
+  theme(
+    panel.spacing = unit(2, "cm")
+  )+
   scale_fill_manual(
     values = c(
       "anger" = "#d7191c",
@@ -55,13 +63,22 @@ ggplot(sent, aes(x = Var2, y = pct, fill = Var1)) +
       "na" = "#bdbdbd",
       "neutro" = "#f0f0f0",
       "trust" = "#1a9641"
+    ),
+    labels = c(
+      "anger"        = "Colère",
+      "anticipation" = "Anticipation",
+      "disgust"      = "Dégoût",
+      "fear"         = "Peur",
+      "joy"          = "Joie",
+      "neutro"       = "Neutre",
+      "trust"        = "Confiance"
     )
   ) +
   labs(
-    title = "Sentiment Distribution by Actor Type",
-    subtitle = "Comparison between Chile (top) and Peru (bottom)",
-    x = "Actor Type",
-    y = "Percentage (%)",
+    title = "Distribution des sentiments par type d'acteur",
+    subtitle = "Comparaison par pays",
+    x = "Type d'acteur",
+    y = "Pourcentage (%)",
     fill = "Sentiment"
   ) +
   theme_minimal() +
@@ -69,7 +86,8 @@ ggplot(sent, aes(x = Var2, y = pct, fill = Var1)) +
     axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
     strip.text = element_text(size = 12, face = "bold"),
     legend.position = "bottom",
-    legend.text = element_text(size = 8)
+    legend.text = element_text(size = 8),
+    panel.spacing.y = unit(2, "lines")
   )
 
 ################
@@ -110,24 +128,32 @@ valence_plot <- valence_data %>%
 # Plot both countries
 ggplot(valence_plot, aes(x = actor_type, y = count_plot, fill = valence)) +
   geom_bar(stat = "identity", position = "stack") +
+  scale_x_discrete(labels = c(
+    "ciudadano" = "Citoyen",
+    "influencer" = "Influenceur",
+    "medio" = "Média",
+    "politico" = "Politicien"))+
   geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  facet_wrap(~ country, scales = "free_x") +
-  scale_fill_manual(
+  facet_wrap(~ country, scales = "fixed") +
+  theme(
+    panel.spacing = unit(2, "cm")
+  )+  scale_fill_manual(
     values = c("positive" = "#2b83ba", "negative" = "#d7191c"),
     labels = c("positive" = "Positive", "negative" = "Negative")
   ) +
   labs(
-    title = "Valence by Actor Type",
-    subtitle = "Comparison between Peru and Chile",
-    x = "Actor Type",
-    y = "Count",
+    title = "Valence des jugements par type d'acteur",
+    subtitle = "Comparaison par pays",
+    x = "Type d'acteur",
+    y = "N",
     fill = "Valence"
   ) +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
     strip.text = element_text(size = 12, face = "bold"),
-    legend.position = "bottom"
+    legend.position = "bottom",
+    panel.spacing.x = unit(3,"lines")
   )
 
 ################
@@ -171,17 +197,20 @@ y_limit <- ceiling(max_value / 10) * 10
 ggplot(judg_actor_pos, aes(x = variable_display, y = count_plot, fill = valence)) +
   geom_bar(stat = "identity", position = "stack") +
   geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  facet_grid( ~ country, scales = "fixed") +
+  facet_wrap(~ country, scales = "fixed", ncol = 1) +
+  theme(
+    panel.spacing = unit(2, "cm")
+  )+
   scale_y_continuous(limits = c(-y_limit, y_limit), breaks = seq(-y_limit, y_limit, by = 5)) +
   scale_fill_manual(
     values = c("positive" = "#2b83ba", "negative" = "#d7191c"),
     labels = c("positive" = "Positive", "negative" = "Negative")
   ) +
   labs(
-    title = "Candidate Appreciation",
-    subtitle = "Comparison between Chile and Peru",
-    x = "Judgement Type",
-    y = "Count",
+    title = "Appreciation des Candidats",
+    subtitle = "Comparaison par pays",
+    x = "Position du candidat",
+    y = "N",
     fill = "Valence"
   ) +
   theme_minimal() +
@@ -272,33 +301,69 @@ max_value <- max(abs(judg_filtered$count_plot), na.rm = TRUE)
 # Round up to a nice number
 y_limit <- ceiling(max_value / 10) * 10
 
-# Create a combined plot with both countries side by side
+# Variable labels
+variable_labels <- c(
+  "Capacity"   = "Capacité",
+  "Normality"  = "Normalité",
+  "Tenacity"   = "Ténacité",
+  "Integrity"  = "Intégrité",
+  "Civility"   = "Civilité",
+  "Honesty"    = "Honnêteté"
+)
+
+# Country labels
+country_labels <- c(
+  "Chile" = "Chili",
+  "Peru"  = "Pérou",
+  "Perú"  = "Pérou"
+)
+
+# Orientation labels
+column_labels <- c(
+  "Left"  = "Gauche",
+  "Right" = "Droite"
+)
+
+# Valence labels
+valence_labels <- c(
+  "positive" = "Positif",
+  "negative" = "Négatif"
+)
+
 ggplot(judg_filtered, aes(x = column_display, y = count_plot, fill = valence)) +
   geom_bar(stat = "identity", position = "stack") +
   geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  facet_grid(country ~ variable_display, scales = "fixed") +
-  scale_y_continuous(limits = c(-y_limit, y_limit), breaks = seq(-y_limit, y_limit, by = 5)) +
+  facet_grid(
+    country ~ variable_display,
+    labeller = labeller(
+      country          = country_labels,
+      variable_display = variable_labels
+    ),
+    scales = "fixed",
+  ) +
+  scale_y_continuous(
+    limits = c(-y_limit, y_limit),
+    breaks = seq(-y_limit, y_limit, by = 10)
+  ) +
+  scale_x_discrete(labels = column_labels) +
   scale_fill_manual(
     values = c("positive" = "#2b83ba", "negative" = "#d7191c"),
-    labels = c("positive" = "Positive", "negative" = "Negative")
+    labels = valence_labels
   ) +
   labs(
-    title = "Candidate appreciation by Variable",
-    subtitle = "Comparison between Chile and Peru",
-    x = "Judgement Type",
-    y = "Count",
+    title = "Évaluation des candidats par dimension appréciative",
+    subtitle = "Comparaison Chili / Pérou (Gauche vs Droite)",
+    x = "Orientation",
+    y = "Nombre de jugements",
     fill = "Valence"
   ) +
   theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    axis.text.x = element_text(size = 10),
     strip.text = element_text(size = 10, face = "bold"),
     legend.position = "bottom",
-    panel.grid.major.x = element_blank()
-  ) 
-
-
-
+    panel.grid.major.x = element_blank(),
+    panel.spacing.y = unit(2, "lines"))
 
 ####################
 ### event appreciation by variable and country
@@ -368,8 +433,10 @@ y_limit <- ceiling(max_value / 10) * 10
 ggplot(judg_event, aes(x = variable_display, y = count_plot, fill = valence)) +
   geom_bar(stat = "identity", position = "stack") +
   geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  facet_grid(~ country , scales = "fixed") +
-  scale_y_continuous(limits = c(-y_limit, y_limit), breaks = seq(-y_limit, y_limit, by = 5)) +
+  facet_wrap(~ country, scales = "fixed", ncol = 1) +
+  theme(
+    panel.spacing = unit(2, "cm")
+  )+  scale_y_continuous(limits = c(-y_limit, y_limit), breaks = seq(-y_limit, y_limit, by = 5)) +
   scale_fill_manual(
     values = c("positive" = "#2b83ba", "negative" = "#d7191c"),
     labels = c("positive" = "Positive", "negative" = "Negative")

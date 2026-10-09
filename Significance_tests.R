@@ -5,6 +5,8 @@ library(stringr)
 library(ggplot2)
 
 
+#Load data
+
 judg <- readRDS("judg_summary_combined.rds")
 
 df <- readRDS("all_obs.rds")%>% 
@@ -17,8 +19,10 @@ df_inf <- df%>% filter(actor_type=="influencer")
 df_med <- df%>% filter(actor_type=="medio")
 
 
-ch_df <- readRDS("ch_df.rds") 
-pr_df <- readRDS("pr_df.rds") 
+ch_df <- df %>% 
+  filter(country== "Chile")
+pr_df <- df %>% 
+  filter(country== "Perú")
 
 judg_ch <- readRDS("judg_combined.rds") %>% 
   filter(country== "Chile") %>%
@@ -39,10 +43,6 @@ mean(pr_df$Stakes[pr_df$actor_type == "medio"], na.rm=TRUE)
 
 mean(ch_df$Intensidad[ch_df$actor_type == "influencer"])
 mean(ch_df$Stakes[ch_df$actor_type == "influencer"])
-
-chile <- pr_df$Stakes[pr_df$actor_type == "medio"]
-peru <- ch_df$Stakes[ch_df$actor_type == "medio"]
-t.test(chile, peru )
 
 table(ch_df$Denuncia[ch_df$actor_type != "politico"])
 table(pr_df$Denuncia[pr_df$actor_type != "politico"])
@@ -86,30 +86,65 @@ cont_table_candidate <- candidate_data %>%
   summarise(count = sum(count), .groups = "drop") %>%
   xtabs(count ~ country + valence, data = .)
 
-gtest_candidate <- GTest(cont_table_candidate, correct = "williams")
-print(gtest_candidate)
 
-#There is no difference in overall candidate evaluation
-
-#confirm if there's significant difference in posts by ciudadanos
+#citizens
 
 ciudadanos_candidatos <- candidate_data %>%
   filter(actor_type == "ciudadano")
 
 cont_table_ciud_candidatos <- xtabs(count ~ country + valence, data = ciudadanos_candidatos)
-gtest_ciud_candidatos <- GTest(cont_table_ciud_candidatos, correct = "williams")
-print(gtest_ciud_candidatos)
-#There is no difference in  candidate evaluation by citizens
 
-#confirm if there's significant difference in posts by politicos
+#politicos
 
 politico <- candidate_data %>%
   filter(actor_type == "politico")
 
 cont_table_pol_candidatos <- xtabs(count ~ country + valence, data = politico)
-gtest_politico_candidatos <- GTest(cont_table_pol_candidatos, correct = "williams")
-print(gtest_politico_candidatos)
-#There is  difference in  candidate evaluation by politicians
+
+#influencer
+
+influencer <- candidate_data %>%
+  filter(actor_type == "influencer")
+
+cont_table_inf_candidatos <- xtabs(count ~ country + valence, data = influencer)
+
+
+#medios
+medio <- candidate_data %>%
+  filter(actor_type == "medio")
+
+cont_table_med_candidatos <- xtabs(count ~ country + valence, data = medio)
+
+
+#Using gtests because categorical variables
+candidatos_tests <- list(
+  overall =  GTest(cont_table_candidate, correct = "williams"),
+  ciudadano = GTest(cont_table_ciud_candidatos, correct = "williams"),
+  politico =GTest(cont_table_pol_candidatos, correct = "williams"),
+  influencer = GTest(cont_table_inf_candidatos, correct = "williams"),
+  medio = GTest(cont_table_med_candidatos, correct = "williams")
+)
+
+candidatos_p <- sapply(
+  candidatos_tests,
+  function(x) x$p.value
+)
+
+#adjusting to limit false discovery rate
+candidato_results <- data.frame(
+  comparison = names(candidatos_p),
+  p_raw = as.numeric(candidatos_p),
+  p.adjust = p.adjust(
+    candidatos_p,
+    method = "BH"
+  )
+)
+candidato_results
+
+
+#almost a difference for politicians, but the adjust kicks it out
+
+
 
 ##############
 #Identify differences in overall post valence 
@@ -133,88 +168,151 @@ valence_data_pr$country <- "Peru"
 valence_data_ch$country <- "Chile"
 valence_data <- bind_rows(valence_data_pr, valence_data_ch)
 
-#confirm if there's significant difference in overall valence of posts
+#overall valence of posts
 
 cont_table_valence <- valence_data %>% 
   group_by(country, valence) %>%
   summarise(count = sum(count), .groups = "drop") %>%
   xtabs(count ~ country + valence, data = .)
 
-gtest_valence <- GTest(cont_table_valence, correct = "williams")
-print(gtest_valence)
-
-#There is difference in overall valence
-
-#confirm if there's significant difference in valence in posts by ciudadanos
+#citizens 
 
 ciudadanos <- valence_data %>%
   filter(actor_type == "ciudadano")
 
 cont_table_ciud <- xtabs(count ~ country + valence, data = ciudadanos)
-gtest_ciud <- GTest(cont_table_ciud, correct = "williams")
-print(gtest_ciud)
 
-#There is  difference in overall valence by citizens
-
-#confirm if there's significant difference in valence in posts by politicos
+#politicians
 
 politico <- valence_data %>%
   filter(actor_type == "politico")
 
 cont_table_pol <- xtabs(count ~ country + valence, data = politico)
-gtest_politico <- GTest(cont_table_pol, correct = "williams")
-print(gtest_politico)
 
-#There is  difference in overall valence by citizens
+#medios
+
+medio <- valence_data %>%
+  filter(actor_type == "medio")
+
+cont_table_med <- xtabs(count ~ country + valence, data = medio)
+
+#influencers
+
+influencer <- valence_data %>%
+  filter(actor_type == "influencer")
+
+cont_table_inf <- xtabs(count ~ country + valence, data = influencer)
+
+#Using gtests because categorical variables
+
+valence_tests <- list(
+  overall = GTest(cont_table_valence, correct = "williams"),
+  ciudadano = GTest(cont_table_ciud, correct = "williams"),
+  politico =GTest(cont_table_pol, correct = "williams"),
+  influencer = GTest(cont_table_inf, correct = "williams"),
+  medio = GTest(cont_table_med, correct = "williams")
+)
+
+valence_p <- sapply(
+  valence_tests,
+  function(x) x$p.value
+)
+
+valence_results <- data.frame(
+  comparison = names(valence_p),
+  p_raw = as.numeric(valence_p),
+  p.adjust = p.adjust(
+    valence_p,
+    method = "BH"
+  )
+)
+valence_results
+
+#significant for overall, citizen and politician, influencer is borderline
 
 
 ##############
 #test for differences in sentiment distribution 
 ##############
 
+#Using gtests because categorical variables
 
-#test overall sentiment distribution 
-GTest(table(df$country, df$sentiment), correct = "williams")
+sentiment_tests <- list(
+  overall = GTest(table(df$country, df$sentiment), correct = "williams"),
+  ciudadano = GTest(table(df_ciud$sentiment, df_ciud$country), correct = "williams"),
+  politico =GTest(table(df_pol$sentiment, df_pol$country), correct = "williams"),
+  influencer = GTest(table(df_inf$sentiment, df_inf$country), correct = "williams"),
+  medio = GTest(table(df_med$sentiment, df_med$country), correct = "williams")
+)
 
-#no difference in overall sentiment distribution 
+sentiment_p <- sapply(
+  sentiment_tests,
+  function(x) x$p.value
+)
 
-#test sentiment distribution per actor type
-GTest(table(df_ciud$sentiment, df_ciud$country))
-#no difference in sentiment distribution for citizens
+sentiment_results <- data.frame(
+  comparison = names(sentiment_p),
+  p_raw = as.numeric(sentiment_p),
+  p.adjust = p.adjust(
+    sentiment_p,
+    method = "BH"
+  )
+)
+sentiment_results
 
-GTest(table(df_pol$sentiment, df_pol$country))
-#no difference in sentiment distribution for politicians
-
-GTest(table(df_inf$sentiment, df_inf$country))
-#no difference in sentiment distribution for influencers
-
-GTest(table(df_med$sentiment, df_med$country))
-#no difference in sentiment distribution for medios
+#no difference in sentiment distribution for anyone, 
+#at least nothing statistically significant, too few obs per cell
 
 ##############
 #test for differences in intensity  
 ##############
+#Using wilcox because ordinal variables
 
-#test overall intensity difference
-t.test(df$Intensidad[df$country == "Chile"], df$Intensidad[df$country == "Perú"])
-#no overall intensity difference
+intensity_tests <- list(
+  overall = wilcox.test(
+    Intensidad ~ country,
+    data = df,
+    exact = FALSE
+  ),
+  ciudadano = wilcox.test(
+    Intensidad ~ country,
+    data = df_ciud,
+    exact = FALSE
+  ),
+  politico =wilcox.test(
+    Intensidad ~ country,
+    data = df_pol,
+    exact = FALSE
+  ),
+  influencer = wilcox.test(
+    Intensidad ~ country,
+    data = df_inf,
+    exact = FALSE
+  ),
+  medio = wilcox.test(
+    Intensidad ~ country,
+    data = df_med,
+    exact = FALSE
+  )
+)
 
-#test intensity difference per actor type
-t.test(df_ciud$Intensidad[df_ciud$country == "Chile"], df_ciud$Intensidad[df_ciud$country == "Perú"])
-#no  intensity difference for citizens
+intensity_p <- sapply(
+  intensity_tests,
+  function(x) x$p.value
+)
 
+intensity_results <- data.frame(
+  comparison = names(intensity_p),
+  p_raw = as.numeric(intensity_p),
+  p.adjust = p.adjust(
+    intensity_p,
+    method = "BH"
+  )
+)
 
-t.test(df_pol$Intensidad[df_pol$country == "Chile"], df_pol$Intensidad[df_pol$country == "Perú"])
-#  intensity difference for politicians ***
+intensity_results
 
-
-t.test(df_inf$Intensidad[df_inf$country == "Chile"], df_inf$Intensidad[df_inf$country == "Perú"])
-#no  intensity difference for influencers
-
-
-t.test(df_med$Intensidad[df_med$country == "Chile"], df_med$Intensidad[df_med$country == "Perú"])
-
-#no  intensity difference for medios
+# only intensity difference for politico
 
 
 
@@ -223,25 +321,52 @@ t.test(df_med$Intensidad[df_med$country == "Chile"], df_med$Intensidad[df_med$co
 #test for differences in stakes  
 ##############
 
-#test overall stake difference
-t.test(df$Stakes[df$country == "Chile"], df$Stakes[df$country == "Perú"])
-#no overall stake difference
 
-#test stake difference per actor type
-t.test(df_ciud$Stakes[df_ciud$country == "Chile"], df_ciud$Stakes[df_ciud$country == "Perú"])
-#no  stake difference for citizens
+#Using wilcox because ordinal variables
+stakes_tests <- list(
+  overall = wilcox.test(
+    Stakes ~ country,
+    data = df,
+    exact = FALSE
+  ),
+  ciudadano = wilcox.test(
+    Stakes ~ country,
+    data = df_ciud,
+    exact = FALSE
+  ),
+  politico =wilcox.test(
+    Stakes ~ country,
+    data = df_pol,
+    exact = FALSE
+  ),
+  influencer = wilcox.test(
+    Stakes ~ country,
+    data = df_inf,
+    exact = FALSE
+  ),
+  medio = wilcox.test(
+    Stakes ~ country,
+    data = df_med,
+    exact = FALSE
+  )
+)
 
+Stakes_p <- sapply(
+  stakes_tests,
+  function(x) x$p.value
+)
 
-t.test(df_pol$Stakes[df_pol$country == "Chile"], df_pol$Stakes[df_pol$country == "Perú"])
-#  no stake difference for politicians 
+Stakes_results <- data.frame(
+  comparison = names(Stakes_p),
+  p_raw = as.numeric(Stakes_p),
+  p_adjust = p.adjust(
+    Stakes_p,
+    method = "BH"
+  )
+)
 
+Stakes_results
 
-t.test(df_inf$Stakes[df_inf$country == "Chile"], df_inf$Stakes[df_inf$country == "Perú"])
-#no  stake difference for influencers
-
-
-t.test(df_med$Stakes[df_med$country == "Chile"], df_med$Stakes[df_med$country == "Perú"])
-
-#  intensity difference for medios *
+#  No difference for stakes
 
 
